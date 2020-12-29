@@ -773,6 +773,8 @@ impl Target {
         self.env.unwrap_or(Environment::Unknown)
     }
 
+    /// 
+    /// Constructs a target tuple in canonical form from the specified components.
     pub fn from_components(
         arch: Architecture,
         vendor: Vendor,

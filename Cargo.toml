@@ -3,6 +3,12 @@ name = "target-tuples"
 version = "0.1.0"
 authors = ["Connor Horman <chorman64@gmail.com>"]
 edition = "2018"
+license = "MIT-or-APACHEv2"
+repository = "https://github.com/chorman0773/rust-target-tuples"
+readme = "README.md"
+description = """
+    A library to parse target tuples of the form <arch>-<vendor>-<system>, similar to those used by autoconf.
+"""
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

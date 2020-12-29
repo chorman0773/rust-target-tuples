@@ -12,3 +12,11 @@ edition = "2018"
 [[bin]]
 name = "config-sub"
 path = "src/config_sub.rs"
+
+[package.metadata.install-targets.config-sub]
+installed-path = "config.sub"
+
+[package.metadata.install-targets.config-sub-man]
+type = "man"
+installed-path = "<mandir>/man1/config.sub.1"
+target-file = "config.sub.1"

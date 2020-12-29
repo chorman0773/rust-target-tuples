@@ -1,3 +1,12 @@
 #![deny(warnings)]
 
-pub mod pieces;
+mod pieces;
+
+pub use pieces::*;
+
+
+
+#[cfg(test)]
+pub mod test {
+    
+}

@@ -622,7 +622,7 @@ impl ObjectFormat {
 pub struct Target {
     full: std::string::String,
     arch: Architecture,
-    vendor: Vendor,
+    vendor: Option<Vendor>,
     // Invariant:
     // At least one of these fields is Some
     os: Option<OS>,
@@ -636,31 +636,77 @@ impl FromStr for Target {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut split = s.split('-');
         let arch = split.next().ok_or(UnknownError).and_then(|s| s.parse())?;
-        let vendor = split
-            .next()
-            .ok_or(UnknownError)
-            .and_then(|s| s.parse().map_err(|e| match e {}))?;
-        let f3 = split.next().ok_or(UnknownError)?;
+        let f2 = split.next().ok_or(UnknownError)?;
+        let f3 = split.next();
         let f4 = split.next();
+        let vendor;
         let os;
         let env;
         let objfmt;
-        if let Some(s) = f4 {
-            os = Some(f3.parse()?);
+        if let (Some(s), None) = (f3, f4) {
+            if let "unknown" = f2 {
+                vendor = Some(Vendor::Unknown);
+                if let Ok(o) = s.parse() {
+                    os = Some(o);
+                    env = None;
+                    objfmt = None;
+                } else if let Ok(e) = s.parse() {
+                    os = None;
+                    env = Some(e);
+                    objfmt = s.parse().ok();
+                } else if let Ok(of) = s.parse() {
+                    os = None;
+                    env = None;
+                    objfmt = Some(of);
+                } else {
+                    return Err(UnknownError);
+                }
+            } else if let Vendor::Unknown = f2.parse().unwrap() {
+                vendor = None;
+                os = Some(f2.parse()?);
+                env = s.parse().ok();
+                objfmt = s.parse().ok();
+                env.map(|_| ())
+                    .or_else(|| objfmt.map(|_| ()))
+                    .ok_or(UnknownError)?;
+            } else {
+                vendor = Some(f2.parse().unwrap());
+                if let Ok(o) = s.parse() {
+                    os = Some(o);
+                    env = None;
+                    objfmt = None;
+                } else if let Ok(e) = s.parse() {
+                    os = None;
+                    env = Some(e);
+                    objfmt = s.parse().ok();
+                } else if let Ok(of) = s.parse() {
+                    os = None;
+                    env = None;
+                    objfmt = Some(of);
+                } else {
+                    return Err(UnknownError);
+                }
+            }
+        } else if let Some(s) = f4 {
+            vendor = Some(f2.parse().unwrap());
+            os = Some(f3.unwrap().parse()?);
             env = s.parse().ok();
             objfmt = s.parse().ok();
             env.map(|_| ())
                 .or_else(|| objfmt.map(|_| ()))
                 .ok_or(UnknownError)?;
-        } else if let Ok(o) = f3.parse() {
+        } else if let Ok(o) = f2.parse() {
+            vendor = None;
             os = Some(o);
             env = None;
             objfmt = None;
-        } else if let Ok(e) = f3.parse() {
+        } else if let Ok(e) = f2.parse() {
+            vendor = None;
             os = None;
             env = Some(e);
-            objfmt = f3.parse().ok();
-        } else if let Ok(of) = f3.parse() {
+            objfmt = f2.parse().ok();
+        } else if let Ok(of) = f2.parse() {
+            vendor = None;
             os = None;
             env = None;
             objfmt = Some(of);
@@ -683,7 +729,11 @@ impl Display for Target {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.arch.fmt(f)?;
         f.write_str("-")?;
-        self.vendor.fmt(f)?;
+        if let Some(vendor) = &self.vendor {
+            vendor.fmt(f)?;
+        } else {
+            self.get_vendor().fmt(f)?;
+        }
         if let Some(os) = &self.os {
             f.write_str("-")?;
             os.fmt(f)?;
@@ -711,6 +761,20 @@ impl Target {
         &*self.full
     }
 
+    ///
+    /// Returns the architecture name
+    pub fn get_arch_name(&self) -> &str {
+        self.full.split('-').next().unwrap()
+    }
+
+    pub fn get_vendor_name(&self) -> &str {
+        if let Some(_) = &self.vendor {
+            self.full.split('-').nth(2).unwrap()
+        } else {
+            self.get_vendor().canonical_name()
+        }
+    }
+
     /// Parses a target tuple of the form arch-vendor-system (where system is either os-env, os, or env).
     /// If a field is not known, it is left as unknown, and the original value will be available
     ///  through the exact name.
@@ -719,33 +783,82 @@ impl Target {
     pub fn parse(s: &str) -> Self {
         let mut split = s.split('-');
         let arch = Architecture::parse(split.next().unwrap());
-        let vendor = split
-            .next()
-            .ok_or(UnknownError)
-            .and_then(|s| s.parse().map_err(|e| match e {}))
-            .unwrap();
-        let f3 = split.next().unwrap();
+        let f2 = split.next().ok_or(UnknownError).unwrap();
+        let f3 = split.next();
         let f4 = split.next();
         let os;
         let env;
         let objfmt;
-        if let Some(s) = f4 {
-            os = Some(f3.parse().unwrap_or(OS::Unknown));
-            env = Some(s.parse().unwrap_or(Environment::Unknown));
+        let vendor;
+        if let (Some(s), None) = (f3, f4) {
+            if let "unknown" = f2 {
+                vendor = Some(Vendor::Unknown);
+                if let Ok(o) = s.parse() {
+                    os = Some(o);
+                    env = None;
+                    objfmt = None;
+                } else if let Ok(e) = s.parse() {
+                    os = None;
+                    env = Some(e);
+                    objfmt = s.parse().ok();
+                } else if let Ok(of) = s.parse() {
+                    os = None;
+                    env = None;
+                    objfmt = Some(of);
+                } else {
+                    os = Some(OS::Unknown);
+                    env = Some(Environment::Unknown);
+                    objfmt = None;
+                }
+            } else if let Vendor::Unknown = f2.parse().unwrap() {
+                vendor = None;
+                os = Some(f2.parse().unwrap());
+                env = s.parse().ok();
+                objfmt = s.parse().ok();
+                env.map(|_| ()).or_else(|| objfmt.map(|_| ())).unwrap();
+            } else {
+                vendor = Some(f2.parse().unwrap());
+                if let Ok(o) = s.parse() {
+                    os = Some(o);
+                    env = None;
+                    objfmt = None;
+                } else if let Ok(e) = s.parse() {
+                    os = None;
+                    env = Some(e);
+                    objfmt = s.parse().ok();
+                } else if let Ok(of) = s.parse() {
+                    os = None;
+                    env = None;
+                    objfmt = Some(of);
+                } else {
+                    os = Some(OS::Unknown);
+                    env = Some(Environment::Unknown);
+                    objfmt = None;
+                }
+            }
+        } else if let Some(s) = f4 {
+            vendor = Some(f2.parse().unwrap());
+            os = Some(OS::parse(f3.unwrap()));
+            env = s.parse().ok();
             objfmt = s.parse().ok();
-        } else if let Ok(o) = f3.parse() {
+            env.map(|_| ()).or_else(|| objfmt.map(|_| ())).unwrap();
+        } else if let Ok(o) = f2.parse() {
+            vendor = None;
             os = Some(o);
             env = None;
             objfmt = None;
-        } else if let Ok(e) = f3.parse() {
+        } else if let Ok(e) = f2.parse() {
+            vendor = None;
             os = None;
             env = Some(e);
-            objfmt = f3.parse().ok();
-        } else if let Ok(of) = f3.parse() {
+            objfmt = f2.parse().ok();
+        } else if let Ok(of) = f2.parse() {
+            vendor = None;
             os = None;
             env = None;
             objfmt = Some(of);
         } else {
+            vendor = Some(Vendor::Unknown);
             os = Some(OS::Unknown);
             env = Some(Environment::Unknown);
             objfmt = None;
@@ -785,7 +898,7 @@ impl Target {
         let mut ret = Self {
             full: String::new(),
             arch,
-            vendor,
+            vendor: Some(vendor),
             os,
             env,
             objfmt,
@@ -829,6 +942,16 @@ impl Target {
     ///
     /// Gets the value of the vendor field.
     pub fn get_vendor(&self) -> Vendor {
-        self.vendor
+        if let Some(vendor) = &self.vendor {
+            *vendor
+        } else {
+            match self.os {
+                Some(OS::MacOSX) | Some(OS::IOS) | Some(OS::TvOS) | Some(OS::WatchOS) => {
+                    Vendor::Apple
+                }
+                Some(OS::CUDA) => Vendor::NVIDIA,
+                _ => Vendor::PC,
+            }
+        }
     }
 }

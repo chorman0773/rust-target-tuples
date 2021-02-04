@@ -34,6 +34,8 @@ pub enum Architecture {
     Wasm32,
     Wasm64,
     Wc65c816,
+    M6502,
+    M65C02,
 }
 
 impl FromStr for Architecture {
@@ -65,6 +67,8 @@ impl FromStr for Architecture {
             "riscv32" => Self::RiscV32,
             "riscv64" => Self::RiscV64,
             "wc65c816" | "65816" | "w65c816" | "65c816" => Self::Wc65c816,
+            "6502" | "6502x" | "6502X" => Self::M6502,
+            "65c02" | "65C02" => Self::M65C02,
             "wasm32" => Self::Wasm32,
             "wasm64" => Self::Wasm64,
 
@@ -131,6 +135,8 @@ impl Architecture {
             Architecture::Wc65c816 => "wc65c816",
             Architecture::MipsLE => "mipsel",
             Architecture::Mips64LE => "mips64el",
+            Architecture::M6502 => "6502",
+            Architecture::M65C02 => "6502",
         }
     }
 }
@@ -143,6 +149,7 @@ pub enum Vendor {
     Unknown,
     Apple,
     PC,
+    NES,
     SNES,
     SCEI,
     Freescale,
@@ -165,6 +172,7 @@ impl FromStr for Vendor {
         Ok(match s {
             "apple" => Self::Apple,
             "pc" => Self::PC,
+            "nes" => Self::NES,
             "snes" | "snesdev" => Self::SNES,
             "scei" => Self::SCEI,
             "fsl" => Self::Freescale,
@@ -221,6 +229,7 @@ impl Vendor {
             Self::Apple => "apple",
             Self::PC => "pc",
             Self::SNES => "snes",
+            Self::NES => "nes",
             Self::Unknown => "unknown",
             Vendor::SCEI => "scei",
             Vendor::Freescale => "fsl",
@@ -539,6 +548,9 @@ pub enum ObjectFormat {
     Goff,
     MachO,
     Wasm,
+
+    Xo65,
+    O65,
 }
 
 impl FromStr for ObjectFormat {
@@ -552,6 +564,8 @@ impl FromStr for ObjectFormat {
             x if x.ends_with("goff") => Self::Goff,
             x if x.ends_with("macho") => Self::MachO,
             x if x.ends_with("wasm") => Self::Wasm,
+            x if x.ends_with("xo65") => Self::Xo65,
+            x if x.ends_with("o65") => Self::O65,
             _ => return Err(UnknownError),
         })
     }
@@ -600,6 +614,8 @@ impl ObjectFormat {
             ObjectFormat::Goff => "goff",
             ObjectFormat::MachO => "macho",
             ObjectFormat::Wasm => "wasm",
+            ObjectFormat::Xo65 => "xo65",
+            ObjectFormat::O65 => "o65",
         }
     }
 }
@@ -954,4 +970,21 @@ impl Target {
             }
         }
     }
+}
+
+///
+/// Parses a target tuple from an environment variable.
+#[macro_export]
+macro_rules! from_env {
+    ($var:literal) => {{
+        use core::str::FromStr as _;
+        let _target: $crate::Target = ::core::env!($var).from_string().unwrap();
+        _target
+    }};
+    ($var:literal?) => {{
+        use core::str::FromStr as _;
+        let _target: ::core::option::Option<$crate::Target> =
+            ::core::option_env!($var).map(|s| s.from_string().unwrap());
+        _target
+    }};
 }

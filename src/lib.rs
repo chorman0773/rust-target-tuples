@@ -1,4 +1,4 @@
-#![deny(warnings)]
+#![deny(warnings, unsafe_code)]
 
 mod pieces;
 

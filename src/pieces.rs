@@ -1,3 +1,4 @@
+#![allow(clippy::upper_case_acronyms)] // Because breaking changes are not allowed
 use std::{fmt::Display, str::FromStr};
 
 ///
@@ -792,7 +793,7 @@ impl Target {
     }
 
     pub fn get_vendor_name(&self) -> &str {
-        if let Some(_) = &self.vendor {
+        if self.vendor.is_some() {
             self.full.split('-').nth(2).unwrap()
         } else {
             self.get_vendor().canonical_name()
@@ -969,17 +970,15 @@ impl Target {
     pub fn get_vendor(&self) -> Vendor {
         if let Some(vendor) = &self.vendor {
             *vendor
+        } else if let Architecture::SPC700 = self.arch {
+            Vendor::SNES
         } else {
-            if let Architecture::SPC700 = self.arch {
-                Vendor::SNES
-            } else {
-                match self.os {
-                    Some(OS::MacOSX) | Some(OS::IOS) | Some(OS::TvOS) | Some(OS::WatchOS) => {
-                        Vendor::Apple
-                    }
-                    Some(OS::CUDA) => Vendor::NVIDIA,
-                    _ => Vendor::PC,
+            match self.os {
+                Some(OS::MacOSX) | Some(OS::IOS) | Some(OS::TvOS) | Some(OS::WatchOS) => {
+                    Vendor::Apple
                 }
+                Some(OS::CUDA) => Vendor::NVIDIA,
+                _ => Vendor::PC,
             }
         }
     }

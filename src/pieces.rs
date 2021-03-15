@@ -36,6 +36,7 @@ pub enum Architecture {
     Wc65c816,
     M6502,
     M65C02,
+    SPC700,
 }
 
 impl FromStr for Architecture {
@@ -71,6 +72,8 @@ impl FromStr for Architecture {
             "65c02" | "65C02" => Self::M65C02,
             "wasm32" => Self::Wasm32,
             "wasm64" => Self::Wasm64,
+
+            "spc700" | "spc" => Self::SPC700,
 
             _ => return Err(UnknownError),
         })
@@ -137,6 +140,7 @@ impl Architecture {
             Architecture::Mips64LE => "mips64el",
             Architecture::M6502 => "6502",
             Architecture::M65C02 => "6502",
+            Architecture::SPC700 => "spc700",
         }
     }
 }
@@ -551,6 +555,7 @@ pub enum ObjectFormat {
 
     Xo65,
     O65,
+    WlaObj,
 }
 
 impl FromStr for ObjectFormat {
@@ -566,6 +571,8 @@ impl FromStr for ObjectFormat {
             x if x.ends_with("wasm") => Self::Wasm,
             x if x.ends_with("xo65") => Self::Xo65,
             x if x.ends_with("o65") => Self::O65,
+            x if x.ends_with("wlaobj") => Self::WlaObj,
+            x if x.ends_with("wla") => Self::WlaObj,
             _ => return Err(UnknownError),
         })
     }
@@ -616,6 +623,7 @@ impl ObjectFormat {
             ObjectFormat::Wasm => "wasm",
             ObjectFormat::Xo65 => "xo65",
             ObjectFormat::O65 => "o65",
+            ObjectFormat::WlaObj => "wlaobj",
         }
     }
 }
@@ -944,6 +952,7 @@ impl Target {
                 (Architecture::X86_64, Some(OS::Win32)) => ObjectFormat::Coff,
                 (Architecture::PowerPC32, Some(OS::AIX)) => ObjectFormat::XCoff,
                 (Architecture::PowerPC64, Some(OS::AIX)) => ObjectFormat::XCoff,
+                (Architecture::SPC700, _) => ObjectFormat::WlaObj,
                 _ => ObjectFormat::Elf,
             }
         }
@@ -961,12 +970,16 @@ impl Target {
         if let Some(vendor) = &self.vendor {
             *vendor
         } else {
-            match self.os {
-                Some(OS::MacOSX) | Some(OS::IOS) | Some(OS::TvOS) | Some(OS::WatchOS) => {
-                    Vendor::Apple
+            if let Architecture::SPC700 = self.arch {
+                Vendor::SNES
+            } else {
+                match self.os {
+                    Some(OS::MacOSX) | Some(OS::IOS) | Some(OS::TvOS) | Some(OS::WatchOS) => {
+                        Vendor::Apple
+                    }
+                    Some(OS::CUDA) => Vendor::NVIDIA,
+                    _ => Vendor::PC,
                 }
-                Some(OS::CUDA) => Vendor::NVIDIA,
-                _ => Vendor::PC,
             }
         }
     }

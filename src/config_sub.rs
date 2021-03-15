@@ -21,6 +21,7 @@ pub fn main() {
                 if let Ok(t) = x.parse::<Target>() {
                     println!("{}", t);
                 } else {
+                    eprintln!("Unsupported target {}", x);
                     std::process::exit(1);
                 }
             }

@@ -583,6 +583,7 @@ PACKAGE_URL=
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+detected_cfg
 RUSTFLAGS
 RUSTC
 INSTALL_DATA
@@ -2748,6 +2749,10 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 
 
+    if test "$RUSTFLAGS" \= ""
+    then
+        RUSTFLAGS="-C opt-level=2 -g"
+    fi
 
     if test x$host_alias != x
     then
@@ -2952,6 +2957,7 @@ $as_echo "no" >&6; }
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+
 
 
 

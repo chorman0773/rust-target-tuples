@@ -5,6 +5,10 @@ AC_DEFUN([LCRUST_PROG_RUSTC],[
     AC_ARG_VAR(RUSTC,[Rust compiler to use])
     AC_ARG_VAR(RUSTFLAGS,[Flags to pass to the rust compiler])
 
+    if test "$RUSTFLAGS" \= "" 
+    then
+        RUSTFLAGS="-C opt-level=2 -g"
+    fi
 
     if test x$host_alias != x 
     then

@@ -68,7 +68,7 @@ impl FromStr for Architecture {
             "sparcv9" | "sparc64" => Self::SparcV9,
             "riscv32" => Self::RiscV32,
             "riscv64" => Self::RiscV64,
-            "wc65c816" | "65816" | "w65c816" | "65c816" => Self::Wc65c816,
+            "wc65c816" | "65816" | "w65c816" | "65c816" | "w65" => Self::Wc65c816,
             "6502" | "6502x" | "6502X" => Self::M6502,
             "65c02" | "65C02" => Self::M65C02,
             "wasm32" => Self::Wasm32,
@@ -136,7 +136,7 @@ impl Architecture {
             Architecture::SparcEL => "sparcel",
             Architecture::Wasm32 => "wasm32",
             Architecture::Wasm64 => "wasm64",
-            Architecture::Wc65c816 => "wc65c816",
+            Architecture::Wc65c816 => "w65",
             Architecture::MipsLE => "mipsel",
             Architecture::Mips64LE => "mips64el",
             Architecture::M6502 => "6502",
@@ -154,8 +154,8 @@ pub enum Vendor {
     Unknown,
     Apple,
     PC,
-    NES,
-    SNES,
+    NES,  // Heck, this is wrong
+    SNES, // As is this
     SCEI,
     Freescale,
     IBM,
@@ -168,6 +168,7 @@ pub enum Vendor {
     Mesa,
     SUSE,
     OpenEmbedded,
+    WDC,
 }
 
 impl FromStr for Vendor {
@@ -177,8 +178,8 @@ impl FromStr for Vendor {
         Ok(match s {
             "apple" => Self::Apple,
             "pc" => Self::PC,
-            "nes" => Self::NES,
-            "snes" | "snesdev" => Self::SNES,
+            // "nes" => Self::NES,
+            // "snes" | "snesdev" => Self::SNES,
             "scei" => Self::SCEI,
             "fsl" => Self::Freescale,
             "img" => Self::ImaginationTechnologies,
@@ -191,6 +192,7 @@ impl FromStr for Vendor {
             "mesa" => Self::Mesa,
             "suse" => Self::SUSE,
             "oe" => Self::OpenEmbedded,
+            "wdc" => Self::WDC,
             _ => Self::Unknown,
         })
     }
@@ -231,11 +233,11 @@ impl Vendor {
     /// ```
     pub fn canonical_name(&self) -> &'static str {
         match self {
-            Self::Apple => "apple",
-            Self::PC => "pc",
-            Self::SNES => "snes",
-            Self::NES => "nes",
-            Self::Unknown => "unknown",
+            Vendor::Apple => "apple",
+            Vendor::PC => "pc",
+            Vendor::SNES => "snes",
+            Vendor::NES => "nes",
+            Vendor::Unknown => "unknown",
             Vendor::SCEI => "scei",
             Vendor::Freescale => "fsl",
             Vendor::IBM => "ibm",
@@ -248,6 +250,7 @@ impl Vendor {
             Vendor::Mesa => "mesa",
             Vendor::SUSE => "suse",
             Vendor::OpenEmbedded => "oe",
+            Vendor::WDC => "wdc",
         }
     }
 }
@@ -295,6 +298,8 @@ pub enum OS {
     WASI,
     Emscripten,
     PhantomOS,
+    SNES, // Not an OS, but the currently config.sub places it in the os field
+    NES,  // likewise
 }
 
 impl FromStr for OS {
@@ -338,6 +343,8 @@ impl FromStr for OS {
             x if x.starts_with("wasi") => Self::WASI,
             x if x.starts_with("emscripten") => Self::Emscripten,
             x if x.starts_with("phantom") => Self::PhantomOS,
+            x if x.starts_with("snes") => Self::SNES,
+            x if x.starts_with("nes") => Self::NES,
 
             _ => return Err(UnknownError),
         })
@@ -415,6 +422,8 @@ impl OS {
             OS::WASI => "wasi",
             OS::Emscripten => "emscripten",
             OS::PhantomOS => "phantom",
+            OS::SNES => "snes",
+            OS::NES => "nes",
         }
     }
 }
@@ -474,7 +483,7 @@ impl FromStr for Environment {
             x if x.starts_with("coreclr") => Self::CoreCLR,
             x if x.starts_with("simulator") => Self::Simulator,
             x if x.starts_with("macabi") => Self::MacABI,
-            x if x.starts_with("pstd") || x.starts_with("standard") => Self::PhantomStandard,
+            x if x.starts_with("pstd") || x.starts_with("user") => Self::PhantomStandard,
             x if x.starts_with("pkrnl") || x.starts_with("kernel") => Self::PhantomKernel,
             _ => return Err(UnknownError),
         })
@@ -535,8 +544,8 @@ impl Environment {
             Environment::CoreCLR => "coreclr",
             Environment::Simulator => "simulator",
             Environment::MacABI => "macabi",
-            Environment::PhantomStandard => "pstd",
-            Environment::PhantomKernel => "pkrnl",
+            Environment::PhantomStandard => "user",
+            Environment::PhantomKernel => "kernel",
         }
     }
 }
@@ -972,7 +981,7 @@ impl Target {
             *vendor
         } else if let Architecture::SPC700 = self.arch {
             Vendor::SNES
-        } else {
+        } else if Architecture::X86 == self.arch || Architecture::X86_64 == self.arch {
             match self.os {
                 Some(OS::MacOSX) | Some(OS::IOS) | Some(OS::TvOS) | Some(OS::WatchOS) => {
                     Vendor::Apple
@@ -980,6 +989,10 @@ impl Target {
                 Some(OS::CUDA) => Vendor::NVIDIA,
                 _ => Vendor::PC,
             }
+        } else if let Architecture::Wc65c816 = self.arch {
+            Vendor::WDC
+        } else {
+            Vendor::Unknown
         }
     }
 }

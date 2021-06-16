@@ -17,7 +17,7 @@ description = """
 
 [[bin]]
 name = "config-sub"
-path = "src/config_sub.rs"
+path = "src/config-sub.rs"
 
 [package.metadata.install-targets.config-sub]
 installed-path = "config.sub"

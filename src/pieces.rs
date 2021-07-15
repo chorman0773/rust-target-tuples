@@ -13,7 +13,15 @@ pub struct UnknownError;
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Architecture {
     Unknown,
-    X86,
+    I86,
+    I8086,
+    I086,
+    I186,
+    I286,
+    I386,
+    I486,
+    I586,
+    I686,
     X86_64,
     Arm,
     ArmBe,
@@ -45,7 +53,15 @@ impl FromStr for Architecture {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            "i386" | "i486" | "i586" | "i686" | "i786" | "i886" | "i986" => Self::X86,
+            "i86" => Self::I86,
+            "i8086" => Self::I8086,
+            "i086" => Self::I086,
+            "i186" => Self::I186,
+            "i286" => Self::I286,
+            "i386" => Self::I386,
+            "i486" => Self::I486,
+            "i586" => Self::I586,
+            "i686" => Self::I686,
             "amd64" | "x86_64" | "x86_64h" => Self::X86_64,
             "armeb" => Self::ArmBe,
             "arm" => Self::Arm,
@@ -96,9 +112,9 @@ impl Architecture {
     /// ```
     ///     use target_tuples::Architecture;
     ///     let arch = Architecture::parse("i386");
-    ///     assert_eq!(arch,Architecture::X86);
+    ///     assert_eq!(arch,Architecture::I386);
     ///     let arch2: Architecture = "i486".parse().unwrap();
-    ///     assert_eq!(arch,arch2);
+    ///     assert_ne!(arch,arch2);
     /// ```
     pub fn parse(st: &str) -> Self {
         Self::from_str(st).unwrap_or(Architecture::Unknown)
@@ -110,14 +126,22 @@ impl Architecture {
     /// Formatting an Architecture yields this string
     /// ## Examples
     /// ```
-    ///    use target_tuples::Architecture;
-    ///    let arch = Architecture::X86;
+    ///#   use target_tuples::Architecture;
+    ///    let arch = Architecture::I386;
     ///    assert_eq!(Architecture::parse(arch.canonical_name()),arch);
     /// ```
     pub fn canonical_name(&self) -> &'static str {
         match self {
             Architecture::Unknown => "unknown",
-            Architecture::X86 => "i386",
+            Architecture::I86 => "i86",
+            Architecture::I086 => "i086",
+            Architecture::I8086 => "i8086",
+            Architecture::I186 => "i186",
+            Architecture::I286 => "i286",
+            Architecture::I386 => "i386",
+            Architecture::I486 => "i486",
+            Architecture::I586 => "i586",
+            Architecture::I686 => "i686",
             Architecture::X86_64 => "x86_64",
             Architecture::Arm => "arm",
             Architecture::ArmBe => "armeb",
@@ -144,6 +168,21 @@ impl Architecture {
             Architecture::SPC700 => "spc700",
         }
     }
+
+    #[allow(clippy::match_like_matches_macro)] // Cannot use matches! with MSRV 1.40, so just allow it
+    pub fn is_x86(&self) -> bool {
+        match self {
+            Architecture::I86
+            | Architecture::I8086
+            | Architecture::I186
+            | Architecture::I286
+            | Architecture::I386
+            | Architecture::I486
+            | Architecture::I586
+            | Architecture::I686 => true,
+            _ => false,
+        }
+    }
 }
 
 ///
@@ -154,8 +193,6 @@ pub enum Vendor {
     Unknown,
     Apple,
     PC,
-    NES,  // Heck, this is wrong
-    SNES, // As is this
     SCEI,
     Freescale,
     IBM,
@@ -235,8 +272,6 @@ impl Vendor {
         match self {
             Vendor::Apple => "apple",
             Vendor::PC => "pc",
-            Vendor::SNES => "snes",
-            Vendor::NES => "nes",
             Vendor::Unknown => "unknown",
             Vendor::SCEI => "scei",
             Vendor::Freescale => "fsl",
@@ -952,13 +987,13 @@ impl Target {
                 (Architecture::Aarch64, Some(OS::MacOSX)) => ObjectFormat::MachO,
                 (Architecture::Aarch64_32, Some(OS::MacOSX)) => ObjectFormat::MachO,
                 (Architecture::Arm, Some(OS::MacOSX)) => ObjectFormat::MachO,
-                (Architecture::X86, Some(OS::MacOSX)) => ObjectFormat::MachO,
+                (arch, Some(OS::MacOSX)) if arch.is_x86() => ObjectFormat::MachO,
                 (Architecture::X86_64, Some(OS::MacOSX)) => ObjectFormat::MachO,
                 (Architecture::Unknown, Some(OS::Win32)) => ObjectFormat::Coff,
                 (Architecture::Aarch64, Some(OS::Win32)) => ObjectFormat::Coff,
                 (Architecture::Aarch64_32, Some(OS::Win32)) => ObjectFormat::Coff,
                 (Architecture::Arm, Some(OS::Win32)) => ObjectFormat::Coff,
-                (Architecture::X86, Some(OS::Win32)) => ObjectFormat::Coff,
+                (arch, Some(OS::Win32)) if arch.is_x86() => ObjectFormat::Coff,
                 (Architecture::X86_64, Some(OS::Win32)) => ObjectFormat::Coff,
                 (Architecture::PowerPC32, Some(OS::AIX)) => ObjectFormat::XCoff,
                 (Architecture::PowerPC64, Some(OS::AIX)) => ObjectFormat::XCoff,
@@ -979,9 +1014,7 @@ impl Target {
     pub fn get_vendor(&self) -> Vendor {
         if let Some(vendor) = &self.vendor {
             *vendor
-        } else if let Architecture::SPC700 = self.arch {
-            Vendor::SNES
-        } else if Architecture::X86 == self.arch || Architecture::X86_64 == self.arch {
+        } else if self.arch.is_x86() || Architecture::X86_64 == self.arch {
             match self.os {
                 Some(OS::MacOSX) | Some(OS::IOS) | Some(OS::TvOS) | Some(OS::WatchOS) => {
                     Vendor::Apple

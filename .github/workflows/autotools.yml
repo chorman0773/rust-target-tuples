@@ -1,4 +1,4 @@
-name: Rust
+name: Rust (autotools)
 
 on:
   push: 
@@ -7,12 +7,12 @@ on:
     branches: [main]
 
 jobs:
-  rust:
-    runs-on: ${{ matrix.os }}
+  autotools_build:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
         rust-channel: [1.40, 1.41, 1.42, 1.43, 1.44, 1.45, 1.46, 1.47, 1.48, 1.49, 1.50, 1.51, 1.52, stable, beta,nightly]
+
     steps:
       - uses: actions/checkout@v2
       - name: Install Rustup Toolchain
@@ -20,13 +20,11 @@ jobs:
           rustup toolchain add --profile minimal ${{ matrix.rust-channel }}
           rustup default ${{ matrix.rust-channel }}
           rustup update
+      - name: Create Build Directory
+        run: mkdir -pv build
       - name: Build
+        working-directory: ${{ github.workspace }}/build
         run: |
-           cargo build
-           cargo test
-  rustfmt:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build
-        run: cargo fmt -- --check  
+          ../configure
+          make
+          make check

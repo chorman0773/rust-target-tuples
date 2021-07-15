@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust-channel: [1.40, 1.41, 1.42, 1.43, 1.44, 1.45, 1.46, 1.47, 1.48, 1.49, 1.50, 1.51, 1.52, stable, beta,nightly]
+        rust-channel: [1.40.0, stable, beta, nightly]
 
     steps:
       - uses: actions/checkout@v2

@@ -1,5 +1,6 @@
 #![allow(clippy::upper_case_acronyms)] // Because breaking changes are not allowed
-use std::{fmt::Display, str::FromStr};
+use alloc::{borrow::ToOwned, string::String};
+use core::{fmt::Display, str::FromStr};
 
 ///
 /// The result of FromStr::from_str, when parsing a field (other than vendor),
@@ -98,7 +99,7 @@ impl FromStr for Architecture {
 }
 
 impl Display for Architecture {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         self.canonical_name().fmt(f)
     }
 }
@@ -108,14 +109,6 @@ impl Architecture {
     /// This is equivalent to [`Self::from_str`], but returns [`Architecture::Unknown`], instead of an error,
     ///  on an unknown architecture.
     /// This is useful (in conjunction with an actual target name)
-    /// ## Example
-    /// ```
-    ///     use target_tuples::Architecture;
-    ///     let arch = Architecture::parse("i386");
-    ///     assert_eq!(arch,Architecture::I386);
-    ///     let arch2: Architecture = "i486".parse().unwrap();
-    ///     assert_ne!(arch,arch2);
-    /// ```
     pub fn parse(st: &str) -> Self {
         Self::from_str(st).unwrap_or(Architecture::Unknown)
     }
@@ -124,12 +117,6 @@ impl Architecture {
     /// Returns the canonical name of the target
     /// The canonical name, when passed into `[`Self::parse`] will yield an equivalent value,
     /// Formatting an Architecture yields this string
-    /// ## Examples
-    /// ```
-    ///#   use target_tuples::Architecture;
-    ///    let arch = Architecture::I386;
-    ///    assert_eq!(Architecture::parse(arch.canonical_name()),arch);
-    /// ```
     pub fn canonical_name(&self) -> &'static str {
         match self {
             Architecture::Unknown => "unknown",
@@ -209,7 +196,7 @@ pub enum Vendor {
 }
 
 impl FromStr for Vendor {
-    type Err = std::convert::Infallible;
+    type Err = core::convert::Infallible;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
@@ -236,7 +223,7 @@ impl FromStr for Vendor {
 }
 
 impl Display for Vendor {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         self.canonical_name().fmt(f)
     }
 }
@@ -245,15 +232,6 @@ impl Vendor {
     /// Parses the Vendor in a "lossy" manner
     /// This is equivalent to [`Self::from_str`].
     /// Note that an unknown vendor is not considered an error.
-    ///
-    /// ## Example
-    /// ```
-    ///     use target_tuples::Vendor;
-    ///     let vendor = Vendor::parse("pc");
-    ///     assert_eq!(vendor,Vendor::PC);
-    ///     let vendor2: Vendor = "pc".parse().unwrap();
-    ///     assert_eq!(vendor,vendor2);
-    /// ```
     pub fn parse(s: &str) -> Self {
         Self::from_str(s).unwrap()
     }
@@ -262,12 +240,6 @@ impl Vendor {
     /// Returns the canonical name of the vendor
     /// The canonical name, when passed into `[`Self::parse`] will yield an equivalent value,
     /// Formatting a Vendor yields this string
-    /// ## Examples
-    /// ```
-    ///    use target_tuples::Vendor;
-    ///    let vendor = Vendor::Apple;
-    ///    assert_eq!(Vendor::parse(vendor.canonical_name()),vendor);
-    /// ```
     pub fn canonical_name(&self) -> &'static str {
         match self {
             Vendor::Apple => "apple",
@@ -387,7 +359,7 @@ impl FromStr for OS {
 }
 
 impl Display for OS {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         self.canonical_name().fmt(f)
     }
 }
@@ -395,15 +367,6 @@ impl Display for OS {
 impl OS {
     /// Parses the OS in a "lossy" manner
     /// This is equivalent to [`Self::from_str`], except that [`OS::Unknown`] is returned, instead of an error, on an unknown OS Field
-    ///
-    /// ## Example
-    /// ```
-    ///     use target_tuples::OS;
-    ///     let os = OS::parse("linux");
-    ///     assert_eq!(os,OS::Linux);
-    ///     let os2: OS = "linux".parse().unwrap();
-    ///     assert_eq!(os,os2);
-    /// ```
     pub fn parse(s: &str) -> Self {
         Self::from_str(s).unwrap_or(Self::Unknown)
     }
@@ -412,12 +375,6 @@ impl OS {
     /// Returns the canonical name of the operating system
     /// The canonical name, when passed into `[`Self::parse`] will yield an equivalent value,
     /// Formatting an OS yields this string
-    /// ## Examples
-    /// ```
-    ///    use target_tuples::OS;
-    ///    let os = OS::PS4;
-    ///    assert_eq!(OS::parse(os.canonical_name()),os);
-    /// ```
     pub fn canonical_name(&self) -> &'static str {
         match self {
             OS::Unknown => "unknown",
@@ -518,7 +475,7 @@ impl FromStr for Environment {
             x if x.starts_with("coreclr") => Self::CoreCLR,
             x if x.starts_with("simulator") => Self::Simulator,
             x if x.starts_with("macabi") => Self::MacABI,
-            x if x.starts_with("pstd") || x.starts_with("user") => Self::PhantomStandard,
+            x if x.starts_with("pcore") || x.starts_with("user") => Self::PhantomStandard,
             x if x.starts_with("pkrnl") || x.starts_with("kernel") => Self::PhantomKernel,
             _ => return Err(UnknownError),
         })
@@ -526,7 +483,7 @@ impl FromStr for Environment {
 }
 
 impl Display for Environment {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         self.canonical_name().fmt(f)
     }
 }
@@ -534,15 +491,6 @@ impl Display for Environment {
 impl Environment {
     /// Parses the Environment name in a "lossy" manner
     /// This is equivalent to [`Self::from_str`], except that [`Environment::Unknown`] is returned, instead of an error, on an unknown OS Field
-    ///
-    /// ## Example
-    /// ```
-    ///     use target_tuples::Environment;
-    ///     let env = Environment::parse("gnu");
-    ///     assert_eq!(env,Environment::GNU);
-    ///     let env2: Environment = "gnu".parse().unwrap();
-    ///     assert_eq!(env,env2);
-    /// ```
     pub fn parse(s: &str) -> Self {
         Self::from_str(s).unwrap_or(Self::Unknown)
     }
@@ -551,12 +499,6 @@ impl Environment {
     /// Returns the canonical name of the environment
     /// The canonical name, when passed into [`Self::parse`] will yield an equivalent value,
     /// Formatting an Environment yields this string
-    /// ## Examples
-    /// ```
-    ///    use target_tuples::Environment;
-    ///    let os = Environment::Musl;
-    ///    assert_eq!(Environment::parse(os.canonical_name()),os);
-    /// ```
     pub fn canonical_name(&self) -> &'static str {
         match self {
             Environment::Unknown => "unknown",
@@ -624,7 +566,7 @@ impl FromStr for ObjectFormat {
 }
 
 impl Display for ObjectFormat {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         self.canonical_name().fmt(f)
     }
 }
@@ -632,15 +574,6 @@ impl Display for ObjectFormat {
 impl ObjectFormat {
     /// Parses the ObjectFormat name in a "lossy" manner, from the end of the Environment field
     /// This is equivalent to [`Self::from_str`], except that [`ObjectFormat::Unknown`] is returned, instead of an error, on an unknown OS Field
-    ///
-    /// ## Example
-    /// ```
-    ///     use target_tuples::ObjectFormat;
-    ///     let of = ObjectFormat::parse("gnuelf");
-    ///     assert_eq!(of,ObjectFormat::Elf);
-    ///     let of2: ObjectFormat = "pstdelf".parse().unwrap();
-    ///     assert_eq!(of,of2);
-    /// ```
     pub fn parse(s: &str) -> Self {
         Self::from_str(s).unwrap_or(Self::Unknown)
     }
@@ -649,14 +582,6 @@ impl ObjectFormat {
     /// Returns the canonical name of the object format
     /// The canonical name, when passed into [`Self::parse`] will yield an equivalent value,
     /// Formatting an ObjectFormat yields this string
-    /// ## Examples
-    /// ```
-    ///    use target_tuples::ObjectFormat;
-    ///    let os = ObjectFormat::MachO;
-    ///    assert_eq!(ObjectFormat::parse(os.canonical_name()),os);
-    /// ```
-    ///
-
     pub fn canonical_name(&self) -> &'static str {
         match self {
             ObjectFormat::Unknown => "unknown",
@@ -689,7 +614,7 @@ impl ObjectFormat {
 ///
 #[derive(Clone, Debug)]
 pub struct Target {
-    full: std::string::String,
+    full: String,
     arch: Architecture,
     vendor: Option<Vendor>,
     // Invariant:
@@ -795,7 +720,7 @@ impl FromStr for Target {
 }
 
 impl Display for Target {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         self.arch.fmt(f)?;
         f.write_str("-")?;
         if let Some(vendor) = &self.vendor {
@@ -972,7 +897,7 @@ impl Target {
             env,
             objfmt,
         };
-        ret.full = format!("{}", &ret);
+        ret.full = alloc::format!("{}", &ret);
         ret
     }
 

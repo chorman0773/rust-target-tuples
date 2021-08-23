@@ -11,7 +11,7 @@ pub struct UnknownError;
 ///
 /// The Architecture field of a target tuple
 #[non_exhaustive]
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Architecture {
     Unknown,
     I86,
@@ -175,7 +175,7 @@ impl Architecture {
 ///
 /// The Vendor field of a target tuple
 ///
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Vendor {
     Unknown,
     Apple,
@@ -264,7 +264,7 @@ impl Vendor {
 
 ///
 /// The Operating System Field of a target tuple
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 #[non_exhaustive]
 pub enum OS {
     Unknown,
@@ -422,7 +422,7 @@ impl OS {
 
 ///
 /// The Environment field of target tuples
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 #[non_exhaustive]
 pub enum Environment {
     Unknown,
@@ -529,7 +529,7 @@ impl Environment {
 
 ///
 /// The object format used by a target
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 #[non_exhaustive]
 pub enum ObjectFormat {
     Unknown,
@@ -748,6 +748,28 @@ impl Display for Target {
     }
 }
 
+impl core::hash::Hash for Target {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.arch.hash(state);
+        self.vendor.hash(state);
+        self.os.hash(state);
+        self.env.hash(state);
+        self.objfmt.hash(state);
+    }
+}
+
+impl PartialEq for Target {
+    fn eq(&self, other: &Self) -> bool {
+        self.arch == other.arch
+            && self.vendor == other.vendor
+            && self.os == other.os
+            && self.env == other.env
+            && self.objfmt == other.objfmt
+    }
+}
+
+impl Eq for Target {}
+
 impl Target {
     ///
     /// Gets the exact name of the target tuple.
@@ -869,15 +891,15 @@ impl Target {
     }
 
     ///
-    /// Gets the value of the `os` field, or unknown if the os was omitted
-    pub fn get_operating_system(&self) -> OS {
-        self.os.unwrap_or(OS::Unknown)
+    /// Gets the value of the `os` field
+    pub fn get_operating_system(&self) -> Option<OS> {
+        self.os
     }
 
     ///
     /// Gets the value of the `env` field, or unknown if the environment was omitted
-    pub fn get_environment(&self) -> Environment {
-        self.env.unwrap_or(Environment::Unknown)
+    pub fn get_environment(&self) -> Option<Environment> {
+        self.env
     }
 
     ///

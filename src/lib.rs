@@ -259,7 +259,7 @@ macro_rules! match_targets{
         }
     } => {
         {
-            let __val = ($targ);
+            let __val = $targ;
             #[allow(unreachable_code)]
             loop {
                 $(if ($crate::__match_target_pattern!($($comp)-*))(&__val){

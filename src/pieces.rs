@@ -1,4 +1,8 @@
-#![allow(clippy::upper_case_acronyms)] // Because breaking changes are not allowed
+#![allow(
+    clippy::upper_case_acronyms,
+    clippy::manual_non_exhaustive,
+    clippy::match_like_matches_macro
+)] // Kill clippy for MSRV
 use alloc::{borrow::ToOwned, string::String};
 use core::{fmt::Display, str::FromStr};
 
@@ -10,7 +14,6 @@ pub struct UnknownError;
 
 ///
 /// The Architecture field of a target tuple
-#[non_exhaustive]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Architecture {
     Unknown,
@@ -47,6 +50,8 @@ pub enum Architecture {
     M6502,
     M65C02,
     SPC700,
+    #[doc(hidden)]
+    __Nonexhaustive,
 }
 
 impl FromStr for Architecture {
@@ -153,10 +158,10 @@ impl Architecture {
             Architecture::M6502 => "6502",
             Architecture::M65C02 => "6502",
             Architecture::SPC700 => "spc700",
+            Architecture::__Nonexhaustive => unreachable!(),
         }
     }
 
-    #[allow(clippy::match_like_matches_macro)] // Cannot use matches! with MSRV 1.40, so just allow it
     pub fn is_x86(&self) -> bool {
         match self {
             Architecture::I86
@@ -193,6 +198,8 @@ pub enum Vendor {
     SUSE,
     OpenEmbedded,
     WDC,
+    #[doc(hidden)]
+    __Nonexhaustive,
 }
 
 impl FromStr for Vendor {
@@ -258,6 +265,7 @@ impl Vendor {
             Vendor::SUSE => "suse",
             Vendor::OpenEmbedded => "oe",
             Vendor::WDC => "wdc",
+            Vendor::__Nonexhaustive => unreachable!(),
         }
     }
 }
@@ -265,7 +273,6 @@ impl Vendor {
 ///
 /// The Operating System Field of a target tuple
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
-#[non_exhaustive]
 pub enum OS {
     Unknown,
 
@@ -307,6 +314,8 @@ pub enum OS {
     PhantomOS,
     SNES, // Not an OS, but the currently config.sub places it in the os field
     NES,  // likewise
+    #[doc(hidden)]
+    __Nonexhaustive,
 }
 
 impl FromStr for OS {
@@ -416,6 +425,7 @@ impl OS {
             OS::PhantomOS => "phantom",
             OS::SNES => "snes",
             OS::NES => "nes",
+            OS::__Nonexhaustive => unreachable!(),
         }
     }
 }
@@ -423,7 +433,6 @@ impl OS {
 ///
 /// The Environment field of target tuples
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
-#[non_exhaustive]
 pub enum Environment {
     Unknown,
     GNU,
@@ -449,6 +458,9 @@ pub enum Environment {
 
     PhantomStandard,
     PhantomKernel,
+
+    #[doc(hidden)]
+    __Nonexhaustive,
 }
 
 impl FromStr for Environment {
@@ -523,6 +535,7 @@ impl Environment {
             Environment::MacABI => "macabi",
             Environment::PhantomStandard => "user",
             Environment::PhantomKernel => "kernel",
+            Environment::__Nonexhaustive => unreachable!(),
         }
     }
 }
@@ -530,7 +543,6 @@ impl Environment {
 ///
 /// The object format used by a target
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
-#[non_exhaustive]
 pub enum ObjectFormat {
     Unknown,
     XCoff,
@@ -543,6 +555,9 @@ pub enum ObjectFormat {
     Xo65,
     O65,
     WlaObj,
+
+    #[doc(hidden)]
+    __Nonexhaustive,
 }
 
 impl FromStr for ObjectFormat {
@@ -594,6 +609,7 @@ impl ObjectFormat {
             ObjectFormat::Xo65 => "xo65",
             ObjectFormat::O65 => "o65",
             ObjectFormat::WlaObj => "wlaobj",
+            ObjectFormat::__Nonexhaustive => unreachable!(),
         }
     }
 }

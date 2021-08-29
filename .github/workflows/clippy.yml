@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build
       run: |
-        rustup toolchain add nightly --component clippy
+        rustup toolchain add stable --component clippy
         rustup update
-        cargo +nightly clippy
+        cargo +stable clippy
     

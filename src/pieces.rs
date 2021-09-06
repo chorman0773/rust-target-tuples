@@ -4,6 +4,7 @@
     clippy::match_like_matches_macro
 )] // Kill clippy for MSRV
 use alloc::{borrow::ToOwned, string::String};
+use core::fmt::Formatter;
 use core::{fmt::Display, str::FromStr};
 
 ///
@@ -11,6 +12,12 @@ use core::{fmt::Display, str::FromStr};
 ///  with a value that is not known to the library
 #[derive(Debug, Clone, Copy)]
 pub struct UnknownError;
+
+impl Display for UnknownError {
+    fn fmt(&self, fmt: &mut Formatter) -> core::fmt::Result {
+        fmt.write_str("Unknown or invalid target or component")
+    }
+}
 
 ///
 /// The Architecture field of a target tuple
@@ -763,7 +770,7 @@ impl Display for Target {
         if let Some(vendor) = &self.vendor {
             vendor.fmt(f)?;
         } else {
-            self.get_vendor().fmt(f)?;
+            self.vendor().fmt(f)?;
         }
         if let Some(os) = &self.os {
             f.write_str("-")?;
@@ -816,15 +823,15 @@ impl Target {
 
     ///
     /// Returns the architecture name
-    pub fn get_arch_name(&self) -> &str {
+    pub fn arch_name(&self) -> &str {
         self.full.split('-').next().unwrap()
     }
 
-    pub fn get_vendor_name(&self) -> &str {
+    pub fn vendor_name(&self) -> &str {
         if self.vendor.is_some() {
             self.full.split('-').nth(2).unwrap()
         } else {
-            self.get_vendor().canonical_name()
+            self.vendor().canonical_name()
         }
     }
 
@@ -929,13 +936,13 @@ impl Target {
 
     ///
     /// Gets the value of the `os` field
-    pub fn get_operating_system(&self) -> Option<OS> {
+    pub fn operating_system(&self) -> Option<OS> {
         self.os
     }
 
     ///
     /// Gets the value of the `env` field, or unknown if the environment was omitted
-    pub fn get_environment(&self) -> Option<Environment> {
+    pub fn environment(&self) -> Option<Environment> {
         self.env
     }
 
@@ -962,7 +969,7 @@ impl Target {
 
     ///
     /// Gets the object format, either from the end of the `env` field, or the default for the target
-    pub fn get_object_format(&self) -> ObjectFormat {
+    pub fn target_object_format(&self) -> ObjectFormat {
         if let Some(of) = self.objfmt {
             of
         } else {
@@ -987,15 +994,20 @@ impl Target {
         }
     }
 
+    /// Gets the object format component from the end of the env component, or None if none is present
+    pub fn object_format(&self) -> Option<ObjectFormat> {
+        self.objfmt
+    }
+
     ///
     /// Gets the value of the Architecture field
-    pub fn get_arch(&self) -> Architecture {
+    pub fn arch(&self) -> Architecture {
         self.arch
     }
 
     ///
     /// Gets the value of the vendor field.
-    pub fn get_vendor(&self) -> Vendor {
+    pub fn vendor(&self) -> Vendor {
         if let Some(vendor) = &self.vendor {
             *vendor
         } else if self.arch.is_x86() || Architecture::X86_64 == self.arch {

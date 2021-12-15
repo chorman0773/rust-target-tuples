@@ -256,14 +256,14 @@ macro_rules! match_targets{
         }
     } => {
         {
-            let __val = $targ;
+            let __val: $crate::Target = $targ;
             #[allow(unreachable_code)]
             loop {
                 $(if ($crate::__match_target_pattern!($($comp)-*))(&__val){
                     break $exp
                 })*
 
-                panic!("Incomplete Exhaustive Target Pattern (add a wildcard match as * => )")
+                unreachable!("Incomplete Exhaustive Target Pattern (add a wildcard match as * => )")
             }
         }
     }

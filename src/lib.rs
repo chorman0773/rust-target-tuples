@@ -256,7 +256,7 @@ macro_rules! match_targets{
         }
     } => {
         {
-            let __val: $crate::Target = $targ;
+            let __val: &$crate::Target = &$targ;
             #[allow(unreachable_code)]
             loop {
                 $(if ($crate::__match_target_pattern!($($comp)-*))(&__val){
@@ -278,6 +278,17 @@ mod tests {
         let target = Target::parse("x86_64-pc-linux-gnu");
         match_targets! {
             match (target) {
+                x86_64-pc-linux-gnu => {},
+                * => panic!("Invalid Target")
+            }
+        }
+    }
+
+    #[test]
+    pub fn test_match_ref() {
+        let target = Target::parse("x86_64-pc-linux-gnu");
+        match_targets! {
+            match (&target) {
                 x86_64-pc-linux-gnu => {},
                 * => panic!("Invalid Target")
             }

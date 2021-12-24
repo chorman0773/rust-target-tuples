@@ -1032,13 +1032,13 @@ impl Target {
 macro_rules! from_env {
     ($var:literal) => {{
         use core::str::FromStr as _;
-        let _target: $crate::Target = ::core::env!($var).from_string().unwrap();
+        let _target: $crate::Target = ::core::env!($var).parse().unwrap();
         _target
     }};
     ($var:literal?) => {{
         use core::str::FromStr as _;
         let _target: ::core::option::Option<$crate::Target> =
-            ::core::option_env!($var).map(|s| s.from_string().unwrap());
+            ::core::option_env!($var).map(|s| s.parse().unwrap());
         _target
     }};
 }

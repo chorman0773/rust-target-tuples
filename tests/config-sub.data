@@ -5,3 +5,4 @@ i386-phantom-kernel|i386-pc-phantom-kernel
 i486-windows-msvc|i486-pc-win32-msvc
 wc65c816-elf|w65-wdc-elf
 65816-snes-elf|w65-wdc-snes-elf
+clever-elf|clever-unknown-elf

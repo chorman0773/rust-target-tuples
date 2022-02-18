@@ -58,6 +58,7 @@ pub enum Architecture {
     M6502 = 31,
     M65C02 = 32,
     SPC700 = 33,
+    Clever = 34,
 
     /// Used for ABI Purposes with lccc
     Null = (-1i32) as u32,
@@ -79,12 +80,15 @@ impl FromStr for Architecture {
             "i486" => Self::I486,
             "i586" => Self::I586,
             "i686" => Self::I686,
-            "amd64" | "x86_64" | "x86_64h" => Self::X86_64,
+            "amd64" | "x86_64" | "x86_64h" | "x86_64v2" | "x86_64v3" | "x86_64v4" | "x64" => {
+                Self::X86_64
+            }
             "armeb" => Self::ArmBe,
             "arm" => Self::Arm,
             "aarch64" | "arm64" | "arm64e" => Self::Aarch64,
             "aarch64_be" | "arm64_be" => Self::Aarch64Be,
             "aarch64_32" | "arm64_32" => Self::Aarch64_32,
+            s if s.starts_with("clever") => Self::Clever,
             "powerpc" | "powerpcspe" | "ppc" | "ppc32" => Self::PowerPC32,
             "powerpc64" | "ppu" | "ppc64" => Self::PowerPC64,
             "powerpc64le" | "ppc64le" => Self::PowerPC64le,
@@ -169,6 +173,7 @@ impl Architecture {
             Architecture::M6502 => "6502",
             Architecture::M65C02 => "6502",
             Architecture::SPC700 => "spc700",
+            Architecture::Clever => "clever",
             Architecture::Null => "null",
             Architecture::__Nonexhaustive => unreachable!(),
         }

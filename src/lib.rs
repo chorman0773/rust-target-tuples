@@ -40,7 +40,7 @@ macro_rules! __match_target_pattern {
         fn __check(targ: &$crate::Target) -> bool {
             let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - $vendor - $os - $env));
 
-            targ.vendor() == targ.vendor()
+            targ.vendor() == mtarg.vendor()
                 && targ.operating_system() == mtarg.operating_system()
                 && targ.environment() == mtarg.environment()
                 && targ.object_format() == mtarg.object_format()
@@ -52,7 +52,7 @@ macro_rules! __match_target_pattern {
         fn __check(targ: &$crate::Target) -> bool {
             let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - $vendor - $sys));
 
-            targ.vendor() == targ.vendor()
+            targ.vendor() == mtarg.vendor()
                 && targ.operating_system() == mtarg.operating_system()
                 && targ.environment() == mtarg.environment()
                 && targ.object_format() == mtarg.object_format()
@@ -65,7 +65,7 @@ macro_rules! __match_target_pattern {
         fn __check(targ: &$crate::Target) -> bool {
             let mtarg = $crate::Target::parse($crate::__to_target!($arch - unknown - $os - $env));
 
-            targ.arch() == targ.arch()
+            targ.arch() == mtarg.arch()
                 && targ.operating_system() == mtarg.operating_system()
                 && targ.environment() == mtarg.environment()
                 && targ.object_format() == mtarg.object_format()
@@ -77,7 +77,7 @@ macro_rules! __match_target_pattern {
         fn __check(targ: &$crate::Target) -> bool {
             let mtarg = $crate::Target::parse($crate::__to_target!($arch - unknown - $sys));
 
-            targ.arch() == targ.arch()
+            targ.arch() == mtarg.arch()
                 && targ.operating_system() == mtarg.operating_system()
                 && targ.environment() == mtarg.environment()
                 && targ.object_format() == mtarg.object_format()
@@ -91,7 +91,7 @@ macro_rules! __match_target_pattern {
             let mtarg =
                 $crate::Target::parse($crate::__to_target!($arch - $vendor - unknown - $env));
 
-            targ.arch() == targ.arch()
+            targ.arch() == mtarg.arch()
                 && targ.vendor() == mtarg.vendor()
                 && targ.environment() == mtarg.environment()
                 && targ.object_format() == mtarg.object_format()
@@ -104,7 +104,7 @@ macro_rules! __match_target_pattern {
         fn __check(targ: &$crate::Target) -> bool {
             let mtarg = $crate::Target::parse($crate::__to_target!($arch - $vendor - elf));
 
-            targ.arch() == targ.arch() && targ.vendor() == mtarg.vendor()
+            targ.arch() == mtarg.arch() && targ.vendor() == mtarg.vendor()
         }
 
         __check
@@ -181,7 +181,7 @@ macro_rules! __match_target_pattern {
             let mtarg =
                 $crate::Target::parse($crate::__to_target!($arch - unknown - unknown - $env));
 
-            targ.arch() == targ.arch()
+            targ.arch() == mtarg.arch()
                 && targ.environment() == mtarg.environment()
                 && targ.object_format() == mtarg.object_format()
         }
@@ -193,7 +193,7 @@ macro_rules! __match_target_pattern {
         fn __check(targ: &$crate::Target) -> bool {
             let mtarg = $crate::Target::parse($crate::__to_target!($arch - unknown - elf));
 
-            targ.arch() == targ.arch()
+            targ.arch() == mtarg.arch()
         }
 
         __check
@@ -358,6 +358,18 @@ mod tests {
                 x86_64-pc-linux-gnu => {},
                 x86_64-*-linux-* => panic!("Incorrect Match"),
                 * => panic!("Incorrect Match"),
+            }
+        }
+    }
+
+    #[test]
+    pub fn target_match_ignore_wrong_matches() {
+        let target = Target::parse("x86_64-pc-linux-gnu");
+        match_targets! {
+            match (target){
+                i686-*-linux-gnu => panic!("Incorrect Match"),
+                x86_64-*-linux-gnu => {},
+                * => panic!("Incorrect Match")
             }
         }
     }

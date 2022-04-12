@@ -337,6 +337,7 @@ pub enum OS {
     PhantomOS = 36,
     SNES = 37, // Not an OS, but the currently config.sub places it in the os field
     NES = 38,  // likewise
+    None = 39, // No OS
 
     Null = (-1i32) as u32,
     #[doc(hidden)]
@@ -386,6 +387,7 @@ impl FromStr for OS {
             x if x.starts_with("phantom") => Self::PhantomOS,
             x if x.starts_with("snes") => Self::SNES,
             x if x.starts_with("nes") => Self::NES,
+            "none" => Self::None,
 
             _ => return Err(UnknownError),
         })
@@ -450,6 +452,7 @@ impl OS {
             OS::PhantomOS => "phantom",
             OS::SNES => "snes",
             OS::NES => "nes",
+            OS::None => "none",
             OS::Null => "null",
             OS::__Nonexhaustive => unreachable!(),
         }

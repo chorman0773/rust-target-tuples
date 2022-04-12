@@ -88,8 +88,7 @@ macro_rules! __match_target_pattern {
 
     ($arch:ident-$vendor:ident-*-$env:ident) => {{
         fn __check(targ: &$crate::Target) -> bool {
-            let mtarg =
-                $crate::Target::parse($crate::__to_target!($arch - $vendor - unknown - $env));
+            let mtarg = $crate::Target::parse($crate::__to_target!($arch - $vendor - none - $env));
 
             targ.arch() == mtarg.arch()
                 && targ.vendor() == mtarg.vendor()
@@ -145,8 +144,7 @@ macro_rules! __match_target_pattern {
 
     (*-$vendor:ident-*-$env:ident) => {{
         fn __check(targ: &$crate::Target) -> bool {
-            let mtarg =
-                $crate::Target::parse($crate::__to_target!(x86_64 - $vendor - unknown - $env));
+            let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - $vendor - none - $env));
 
             targ.vendor() == mtarg.vendor()
                 && targ.environment() == mtarg.environment()
@@ -178,8 +176,7 @@ macro_rules! __match_target_pattern {
 
     ($arch:ident-*-*-$env:ident) => {{
         fn __check(targ: &$crate::Target) -> bool {
-            let mtarg =
-                $crate::Target::parse($crate::__to_target!($arch - unknown - unknown - $env));
+            let mtarg = $crate::Target::parse($crate::__to_target!($arch - unknown - none - $env));
 
             targ.arch() == mtarg.arch()
                 && targ.environment() == mtarg.environment()
@@ -201,8 +198,7 @@ macro_rules! __match_target_pattern {
 
     ($arch:ident-*-$os:ident-*) => {{
         fn __check(targ: &$crate::Target) -> bool {
-            let mtarg =
-                $crate::Target::parse($crate::__to_target!($arch - unknown - $os - unknown));
+            let mtarg = $crate::Target::parse($crate::__to_target!($arch - unknown - $os - elf));
 
             targ.arch() == mtarg.arch() && targ.operating_system() == mtarg.operating_system()
         }
@@ -212,8 +208,7 @@ macro_rules! __match_target_pattern {
 
     (*-*-*-$env:ident) => {{
         fn __check(targ: &$crate::Target) -> bool {
-            let mtarg =
-                $crate::Target::parse($crate::__to_target!(x86_64 - unknown - unknown - $env));
+            let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - unknown - none - $env));
 
             targ.environment() == mtarg.environment()
                 && targ.object_format() == mtarg.object_format()
@@ -224,8 +219,7 @@ macro_rules! __match_target_pattern {
 
     (*-*-$os:ident-*) => {{
         fn __check(targ: &$crate::Target) -> bool {
-            let mtarg =
-                $crate::Target::parse($crate::__to_target!(x86_64 - unknown - $os - unknown));
+            let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - unknown - $os - elf));
 
             targ.operating_system() == mtarg.operating_system()
         }

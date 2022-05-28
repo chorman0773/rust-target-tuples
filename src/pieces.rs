@@ -843,6 +843,16 @@ impl Target {
         }
     }
 
+    /// Gets the entire sys component
+    pub fn sys(&self) -> &str {
+        let (_, mut r) = self.full.split_once("-").unwrap();
+        if self.vendor.is_some() {
+            let (_, r2) = r.split_once("-").unwrap();
+            r = r2;
+        }
+        r
+    }
+
     /// Parses a target tuple of the form arch-vendor-system (where system is either os-env, os, or env).
     /// If a field is not known, it is left as unknown, and the original value will be available
     ///  through the exact name.
@@ -954,6 +964,46 @@ impl Target {
         self.env
     }
 
+    pub fn parse_components(arch: &str, vendor: Option<&str>, sys: &str) -> Self {
+        use core::fmt::Write;
+        let mut full = String::new();
+        write!(full, "{}", arch).unwrap();
+        if let Some(vendor) = vendor {
+            write!(full, "-{}", vendor).unwrap();
+        }
+        write!(full, "-{}", sys).unwrap();
+
+        let arch = Architecture::parse(arch);
+        let vendor = vendor.map(Vendor::parse);
+
+        let mut os = None;
+        let mut env = None;
+        let mut objfmt = None;
+
+        if let Some((l, r)) = sys.split_once("-") {
+            os = Some(OS::parse(l));
+
+            env = r.parse().ok();
+            objfmt = r.parse().ok();
+        } else {
+            if let Ok(o) = sys.parse::<OS>() {
+                os = Some(o);
+            } else {
+                env = sys.parse().ok();
+                objfmt = sys.parse().ok();
+            }
+        }
+        assert!(os.is_some() || env.is_some() || objfmt.is_some());
+        Self {
+            full,
+            arch,
+            vendor,
+            os,
+            env,
+            objfmt,
+        }
+    }
+
     ///
     /// Constructs a target tuple in canonical form from the specified components.
     pub fn from_components(
@@ -972,6 +1022,35 @@ impl Target {
             objfmt,
         };
         ret.full = alloc::format!("{}", &ret);
+        ret
+    }
+
+    ///
+    /// Constructs a target tuple in canonical form from the specified components.
+    pub fn from_components_without_vendor(
+        arch: Architecture,
+        os: Option<OS>,
+        env: Option<Environment>,
+        objfmt: Option<ObjectFormat>,
+    ) -> Self {
+        use core::fmt::Write;
+        let mut ret = Self {
+            full: String::new(),
+            arch,
+            vendor: None,
+            os,
+            env,
+            objfmt,
+        };
+        write!(ret.full, "{}", arch).unwrap();
+        if let Some(os) = os {
+            write!(ret.full, "-{}", os).unwrap();
+        }
+        if let Some(env) = env {
+            write!(ret.full, "-{}", env).unwrap();
+        } else if let Some(objfmt) = objfmt {
+            write!(ret.full, "-{}", objfmt).unwrap();
+        }
         ret
     }
 

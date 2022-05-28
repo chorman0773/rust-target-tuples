@@ -845,10 +845,11 @@ impl Target {
 
     /// Gets the entire sys component
     pub fn sys(&self) -> &str {
-        let (_, mut r) = self.full.split_once("-").unwrap();
+        let pos = self.full.find('-').unwrap();
+        let mut r = &self.full[(pos + 1)..];
         if self.vendor.is_some() {
-            let (_, r2) = r.split_once("-").unwrap();
-            r = r2;
+            let pos = self.full.find('-').unwrap();
+            r = &r[(pos + 1)..];
         }
         r
     }
@@ -980,19 +981,18 @@ impl Target {
         let mut env = None;
         let mut objfmt = None;
 
-        if let Some(pos) = sys.find("-") {
+        if let Some(pos) = sys.find('-') {
             let (l, r) = sys.split_at(pos);
+            let r = &r[1..];
             os = Some(OS::parse(l));
 
             env = r.parse().ok();
             objfmt = r.parse().ok();
+        } else if let Ok(o) = sys.parse::<OS>() {
+            os = Some(o);
         } else {
-            if let Ok(o) = sys.parse::<OS>() {
-                os = Some(o);
-            } else {
-                env = sys.parse().ok();
-                objfmt = sys.parse().ok();
-            }
+            env = sys.parse().ok();
+            objfmt = sys.parse().ok();
         }
         assert!(os.is_some() || env.is_some() || objfmt.is_some());
         Self {

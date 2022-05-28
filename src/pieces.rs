@@ -980,7 +980,8 @@ impl Target {
         let mut env = None;
         let mut objfmt = None;
 
-        if let Some((l, r)) = sys.split_once("-") {
+        if let Some(pos) = sys.find("-") {
+            let (l, r) = sys.split_at(pos);
             os = Some(OS::parse(l));
 
             env = r.parse().ok();

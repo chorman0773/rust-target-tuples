@@ -34,6 +34,7 @@ pub enum Architecture {
     I486 = 7,
     I586 = 8,
     I686 = 9,
+    I786 = 35,
     X86_64 = 10,
     Arm = 11,
     ArmBe = 12,
@@ -80,6 +81,7 @@ impl FromStr for Architecture {
             "i486" => Self::I486,
             "i586" => Self::I586,
             "i686" => Self::I686,
+            "i786" => Self::I786,
             "amd64" | "x86_64" | "x86_64h" | "x86_64v2" | "x86_64v3" | "x86_64v4" | "x64" => {
                 Self::X86_64
             }
@@ -149,6 +151,7 @@ impl Architecture {
             Architecture::I486 => "i486",
             Architecture::I586 => "i586",
             Architecture::I686 => "i686",
+            Architecture::I786 => "i786",
             Architecture::X86_64 => "x86_64",
             Architecture::Arm => "arm",
             Architecture::ArmBe => "armeb",
@@ -188,7 +191,8 @@ impl Architecture {
             | Architecture::I386
             | Architecture::I486
             | Architecture::I586
-            | Architecture::I686 => true,
+            | Architecture::I686
+            | Architecture::I786 => true,
             _ => false,
         }
     }
@@ -338,6 +342,7 @@ pub enum OS {
     SNES = 37, // Not an OS, but the currently config.sub places it in the os field
     NES = 38,  // likewise
     None = 39, // No OS
+    CleverOS = 40,
 
     Null = (-1i32) as u32,
     #[doc(hidden)]
@@ -387,6 +392,7 @@ impl FromStr for OS {
             x if x.starts_with("phantom") => Self::PhantomOS,
             x if x.starts_with("snes") => Self::SNES,
             x if x.starts_with("nes") => Self::NES,
+            x if x.starts_with("cleveros") => Self::CleverOS,
             "none" => Self::None,
 
             _ => return Err(UnknownError),
@@ -453,6 +459,7 @@ impl OS {
             OS::SNES => "snes",
             OS::NES => "nes",
             OS::None => "none",
+            OS::CleverOS => "cleveros",
             OS::Null => "null",
             OS::__Nonexhaustive => unreachable!(),
         }

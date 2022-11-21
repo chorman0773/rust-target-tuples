@@ -855,7 +855,7 @@ impl Target {
         let pos = self.full.find('-').unwrap();
         let mut r = &self.full[(pos + 1)..];
         if self.vendor.is_some() {
-            let pos = self.full.find('-').unwrap();
+            let pos = r.find('-').unwrap();
             r = &r[(pos + 1)..];
         }
         r

@@ -8,3 +8,4 @@ wc65c816-elf|w65-wdc-elf
 65816-snes-elf|w65-wdc-snes-elf
 clever-elf|clever-unknown-elf
 clever-cleveros|clever-unknown-cleveros
+wasm32-ableos|wasm32-unknown-ableos

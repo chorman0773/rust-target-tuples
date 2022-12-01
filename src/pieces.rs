@@ -343,6 +343,7 @@ pub enum OS {
     NES = 38,  // likewise
     None = 39, // No OS
     CleverOS = 40,
+    AbleOS = 41, 
 
     Null = (-1i32) as u32,
     #[doc(hidden)]
@@ -393,6 +394,7 @@ impl FromStr for OS {
             x if x.starts_with("snes") => Self::SNES,
             x if x.starts_with("nes") => Self::NES,
             x if x.starts_with("cleveros") => Self::CleverOS,
+            x if x.starts_with("ableos") => Self::AbleOS,
             "none" => Self::None,
 
             _ => return Err(UnknownError),
@@ -460,6 +462,7 @@ impl OS {
             OS::NES => "nes",
             OS::None => "none",
             OS::CleverOS => "cleveros",
+            OS::AbleOS => "ableos",
             OS::Null => "null",
             OS::__Nonexhaustive => unreachable!(),
         }

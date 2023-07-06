@@ -60,6 +60,7 @@ pub enum Architecture {
     M65C02 = 32,
     SPC700 = 33,
     Clever = 34,
+    HoleyBytes = 36,
 
     /// Used for ABI Purposes with lccc
     Null = (-1i32) as u32,
@@ -114,6 +115,7 @@ impl FromStr for Architecture {
             "wasm64" => Self::Wasm64,
 
             "spc700" | "spc" => Self::SPC700,
+            "holeybytes" | "hbvm" => Self::HoleyBytes,
 
             _ => return Err(UnknownError),
         })
@@ -177,6 +179,7 @@ impl Architecture {
             Architecture::M65C02 => "6502",
             Architecture::SPC700 => "spc700",
             Architecture::Clever => "clever",
+            Architecture::HoleyBytes => "holeybytes",
             Architecture::Null => "null",
             Architecture::__Nonexhaustive => unreachable!(),
         }
@@ -343,7 +346,7 @@ pub enum OS {
     NES = 38,  // likewise
     None = 39, // No OS
     CleverOS = 40,
-    AbleOS = 41, 
+    AbleOS = 41,
 
     Null = (-1i32) as u32,
     #[doc(hidden)]

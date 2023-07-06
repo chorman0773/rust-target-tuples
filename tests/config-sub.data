@@ -9,3 +9,5 @@ wc65c816-elf|w65-wdc-elf
 clever-elf|clever-unknown-elf
 clever-cleveros|clever-unknown-cleveros
 wasm32-ableos|wasm32-unknown-ableos
+holeybytes-ableos|holeybytes-unknown-ableos
+hbvm-ableos|holeybytes-unknown-ableos

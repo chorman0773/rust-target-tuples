@@ -839,7 +839,7 @@ impl Target {
     ///
     /// Gets the exact name of the target tuple.
     pub fn get_name(&self) -> &str {
-        &*self.full
+        &self.full
     }
 
     ///

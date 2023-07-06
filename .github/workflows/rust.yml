@@ -11,14 +11,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest]
         rust-channel: [1.38.0, stable, beta,nightly]
-        exclude:
-          - os: [windows-latest, macos-latest]
-            rust-channel: [1.38.0,beta, nightly]
-        include:
-          - os: windows-latest
-            rust-channel: [1.38.0]
 
     steps:
       - uses: actions/checkout@v2

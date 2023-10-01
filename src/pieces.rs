@@ -115,7 +115,7 @@ impl FromStr for Architecture {
             "wasm64" => Self::Wasm64,
 
             "spc700" | "spc" => Self::SPC700,
-            "holeybytes" | "hbvm" => Self::HoleyBytes,
+            "holeybytes" | "hbvm" | "hb" => Self::HoleyBytes,
 
             _ => return Err(UnknownError),
         })

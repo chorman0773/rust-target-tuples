@@ -347,6 +347,7 @@ pub enum OS {
     None = 39, // No OS
     CleverOS = 40,
     AbleOS = 41,
+    Lilium = 42,
 
     Null = (-1i32) as u32,
     #[doc(hidden)]
@@ -398,6 +399,7 @@ impl FromStr for OS {
             x if x.starts_with("nes") => Self::NES,
             x if x.starts_with("cleveros") => Self::CleverOS,
             x if x.starts_with("ableos") => Self::AbleOS,
+            x if x.starts_with("lilium") => Self::Lilium,
             "none" => Self::None,
 
             _ => return Err(UnknownError),
@@ -466,6 +468,7 @@ impl OS {
             OS::None => "none",
             OS::CleverOS => "cleveros",
             OS::AbleOS => "ableos",
+            OS::Lilium => "lilium",
             OS::Null => "null",
             OS::__Nonexhaustive => unreachable!(),
         }
@@ -499,8 +502,13 @@ pub enum Environment {
     Simulator = 19,
     MacABI = 20,
 
+    #[deprecated = "Renamed OS, use Standard instead"]
     PhantomStandard = 21,
+    #[deprecated = "Renamed OS, use Kernel instead"]
     PhantomKernel = 22,
+
+    Standard = 23,
+    Kernel = 24,
 
     Null = (-1i32) as u32,
     #[doc(hidden)]
@@ -531,8 +539,12 @@ impl FromStr for Environment {
             x if x.starts_with("coreclr") => Self::CoreCLR,
             x if x.starts_with("simulator") => Self::Simulator,
             x if x.starts_with("macabi") => Self::MacABI,
-            x if x.starts_with("pcore") || x.starts_with("user") => Self::PhantomStandard,
-            x if x.starts_with("pkrnl") || x.starts_with("kernel") => Self::PhantomKernel,
+            #[allow(deprecated)]
+            x if x.starts_with("pcore") => Self::PhantomStandard,
+            #[allow(deprecated)]
+            x if x.starts_with("pkrnl") => Self::PhantomKernel,
+            x if x.starts_with("std") => Self::Standard,
+            x if x.starts_with("kernel") => Self::Kernel,
             _ => return Err(UnknownError),
         })
     }
@@ -577,8 +589,12 @@ impl Environment {
             Environment::CoreCLR => "coreclr",
             Environment::Simulator => "simulator",
             Environment::MacABI => "macabi",
+            #[allow(deprecated)]
             Environment::PhantomStandard => "user",
+            #[allow(deprecated)]
             Environment::PhantomKernel => "kernel",
+            Environment::Standard => "std",
+            Environment::Kernel => "kernel",
             Environment::Null => "",
             Environment::__Nonexhaustive => unreachable!(),
         }

@@ -401,7 +401,7 @@ impl OS {
             OS::NetBSD => "netbsd",
             OS::OpenBSD => "openbsd",
             OS::Solaris => "solaris",
-            OS::Win32 => "win32",
+            OS::Win32 => "windows",
             OS::ZOS => "zos",
             OS::Haiku => "haiku",
             OS::Minix => "minix",

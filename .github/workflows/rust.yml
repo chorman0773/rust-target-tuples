@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
-        rust-channel: [1.38.0, stable, beta,nightly]
+        rust-channel: [stable, beta,nightly]
 
     steps:
       - uses: actions/checkout@v2
@@ -25,9 +25,3 @@ jobs:
         run: |
            cargo build
            cargo test
-  rustfmt:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build
-        run: cargo fmt -- --check  

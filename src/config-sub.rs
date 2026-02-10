@@ -18,8 +18,8 @@ pub fn main() {
                 println!("This program is provided AS-IS, without any warranty.");
             }
             x => {
-                if let Ok(t) = x.parse::<Target>() {
-                    println!("{}", t);
+                if let Ok(t) = TargetRef::try_parse(x) {
+                    println!("{}", t.canonical());
                 } else {
                     eprintln!("Unsupported target {}", x);
                     std::process::exit(1);

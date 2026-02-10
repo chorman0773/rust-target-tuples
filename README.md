@@ -4,7 +4,7 @@ Implements parsing of target tuples. Additionally provides a small program that 
 
 ## Copyright
 
-Copyright (C) 2020 Connor Horman
+Copyright (C) 2020-2026 Connor Horman
 
 This program is dual-licensed under the terms of the MIT and Apache v2 licenses. 
 See <LICENSE-MIT> and <LICENSE-APACHE> for details. 
@@ -21,7 +21,7 @@ Additionally, it can be configured and built by running the configure script pre
 
 ## Semver Policy
 
-The MSRV for rust-target-tuples is rust 1.38. Increases to this value represents a semver major change.
+The MSRV for rust-target-tuples is rust 1.66. Increases to this value represents a semver major change. It is likely that, barring any major design changes, this will remain to the 1.0 release.
 
 This library does not guarantee the output of any of it's string parsing methods, or the canonical name of any component. Changes to both parsing and canonicalization may happen in a minor release. Additional component values may also be added in a minor release. 
 

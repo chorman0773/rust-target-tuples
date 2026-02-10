@@ -1,0 +1,10 @@
+[package]
+name = "target-tuples-macro"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+target-tuple-pieces = { version = "0.16.0", path = "../target-tuple-pieces" }
+
+[lib]
+proc-macro = true

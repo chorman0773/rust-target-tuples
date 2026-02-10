@@ -1,370 +1,184 @@
 #![deny(warnings, unsafe_code)]
 #![cfg_attr(not(any(doc, test)), no_std)]
 
+#[cfg(feature = "alloc")]
 extern crate alloc;
 
-mod pieces;
+pub mod pieces;
 
-pub use pieces::*;
+use core::{ops::Deref, str::FromStr};
 
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __to_target {
-    ($first:ident-$($rest:ident)-+) => {
-        ::core::concat!(::core::stringify!($first) $(,"-",::core::stringify!($rest))*)
+use pieces::*;
+
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+pub struct CanonicalTarget {
+    pub arch: Architecture,
+    pub vendor: Option<Vendor>,
+    pub sys: System,
+}
+
+impl CanonicalTarget {
+    pub fn guess_vendor(&self) -> Vendor {
+        if let Some(vendor) = self.vendor {
+            return vendor;
+        }
+        match (self.arch, self.sys.os()) {
+            (
+                Architecture::X86_16(_) | Architecture::X86_32(_) | Architecture::X86_64 { .. },
+                _,
+            ) => Vendor::PC,
+            (Architecture::Wc65c816, _) => Vendor::WDC,
+            _ => Vendor::Unknown,
+        }
     }
 }
 
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __match_target_pattern {
-    ($arch:ident-$vendor:ident-$os:ident-$env:ident) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!($arch - $vendor - $os - $env));
-            *targ == mtarg
-        }
+impl core::str::FromStr for CanonicalTarget {
+    type Err = UnknownError;
 
-        __check
-    }};
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (arch, rest) = s.split_once('-').ok_or(UnknownError)?;
 
-    ($arch:ident-$vendor:ident-$sys:ident) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!($arch - $vendor - $sys));
-            targ == mtarg
-        }
+        let arch = arch.parse::<Architecture>()?;
 
-        __check
-    }};
+        let (vendor, sys) = if let Some((a, b)) = rest.split_once('-') {
+            if b.contains('-') {
+                // 4 component, this is vendor-os-env
+                (Some(Vendor::parse(a)), b.parse::<System>()?)
+            } else if let Ok(sys) = rest.parse::<System>() {
+                (None, sys)
+            } else {
+                (Some(Vendor::parse(a)), b.parse::<System>()?)
+            }
+        } else {
+            (None, rest.parse::<System>()?)
+        };
 
-    (*-$vendor:ident-$os:ident-$env:ident) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - $vendor - $os - $env));
-
-            targ.vendor() == mtarg.vendor()
-                && targ.operating_system() == mtarg.operating_system()
-                && targ.environment() == mtarg.environment()
-                && targ.object_format() == mtarg.object_format()
-        }
-
-        __check
-    }};
-    (*-$vendor:ident-$sys:ident) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - $vendor - $sys));
-
-            targ.vendor() == mtarg.vendor()
-                && targ.operating_system() == mtarg.operating_system()
-                && targ.environment() == mtarg.environment()
-                && targ.object_format() == mtarg.object_format()
-        }
-
-        __check
-    }};
-
-    ($arch:ident-*-$os:ident-$env:ident) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!($arch - unknown - $os - $env));
-
-            targ.arch() == mtarg.arch()
-                && targ.operating_system() == mtarg.operating_system()
-                && targ.environment() == mtarg.environment()
-                && targ.object_format() == mtarg.object_format()
-        }
-
-        __check
-    }};
-    ($arch:ident-*-$sys:ident) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!($arch - unknown - $sys));
-
-            targ.arch() == mtarg.arch()
-                && targ.operating_system() == mtarg.operating_system()
-                && targ.environment() == mtarg.environment()
-                && targ.object_format() == mtarg.object_format()
-        }
-
-        __check
-    }};
-
-    ($arch:ident-$vendor:ident-*-$env:ident) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!($arch - $vendor - none - $env));
-
-            targ.arch() == mtarg.arch()
-                && targ.vendor() == mtarg.vendor()
-                && targ.environment() == mtarg.environment()
-                && targ.object_format() == mtarg.object_format()
-        }
-
-        __check
-    }};
-
-    ($arch:ident-$vendor:ident-*) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!($arch - $vendor - elf));
-
-            targ.arch() == mtarg.arch() && targ.vendor() == mtarg.vendor()
-        }
-
-        __check
-    }};
-
-    ($arch:ident-$vendor:ident-$os:ident-*) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!($arch - $vendor - $os - elf));
-
-            targ.vendor() == mtarg.vendor() && targ.operating_system() == mtarg.operating_system()
-        }
-
-        __check
-    }};
-
-    (*-*-$os:ident-$env:ident) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - unknown - $os - $env));
-
-            targ.operating_system() == mtarg.operating_system()
-                && targ.environment() == mtarg.environment()
-                && targ.object_format() == mtarg.object_format()
-        }
-
-        __check
-    }};
-    (*-*-$sys:ident) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - unknown - $sys));
-
-            targ.operating_system() == mtarg.operating_system()
-                && targ.environment() == mtarg.environment()
-                && targ.object_format() == mtarg.object_format()
-        }
-
-        __check
-    }};
-
-    (*-$vendor:ident-*-$env:ident) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - $vendor - none - $env));
-
-            targ.vendor() == mtarg.vendor()
-                && targ.environment() == mtarg.environment()
-                && targ.object_format() == mtarg.object_format()
-        }
-
-        __check
-    }};
-
-    (*-$vendor:ident-*) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - $vendor - elf));
-
-            targ.vendor() == mtarg.vendor()
-        }
-
-        __check
-    }};
-
-    (*-$vendor:ident-$os:ident-*) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - $vendor - $os - elf));
-
-            targ.vendor() == mtarg.vendor() && targ.operating_system() == mtarg.operating_system()
-        }
-
-        __check
-    }};
-
-    ($arch:ident-*-*-$env:ident) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!($arch - unknown - none - $env));
-
-            targ.arch() == mtarg.arch()
-                && targ.environment() == mtarg.environment()
-                && targ.object_format() == mtarg.object_format()
-        }
-
-        __check
-    }};
-
-    ($arch:ident-*-*) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!($arch - unknown - elf));
-
-            targ.arch() == mtarg.arch()
-        }
-
-        __check
-    }};
-
-    ($arch:ident-*-$os:ident-*) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!($arch - unknown - $os - elf));
-
-            targ.arch() == mtarg.arch() && targ.operating_system() == mtarg.operating_system()
-        }
-
-        __check
-    }};
-
-    (*-*-*-$env:ident) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - unknown - none - $env));
-
-            targ.environment() == mtarg.environment()
-                && targ.object_format() == mtarg.object_format()
-        }
-
-        __check
-    }};
-
-    (*-*-$os:ident-*) => {{
-        fn __check(targ: &$crate::Target) -> bool {
-            let mtarg = $crate::Target::parse($crate::__to_target!(x86_64 - unknown - $os - elf));
-
-            targ.operating_system() == mtarg.operating_system()
-        }
-
-        __check
-    }};
-
-    (*-*-*) => {{
-        fn __check(_: &$crate::Target) -> bool {
-            true
-        }
-        __check
-    }};
-
-    (*) => {{
-        fn __check(_: &$crate::Target) -> bool {
-            true
-        }
-        __check
-    }};
+        Ok(CanonicalTarget { arch, vendor, sys })
+    }
 }
 
+impl core::fmt::Display for CanonicalTarget {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.arch.fmt(f)?;
+        f.write_str("-")?;
+
+        self.guess_vendor().fmt(f)?;
+
+        f.write_str("-")?;
+
+        self.sys.fmt(f)
+    }
+}
+
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+pub struct TargetRef<'a> {
+    exact: &'a str,
+    canon: CanonicalTarget,
+}
+
+impl<'a> Deref for TargetRef<'a> {
+    type Target = CanonicalTarget;
+
+    fn deref(&self) -> &CanonicalTarget {
+        &self.canon
+    }
+}
+
+impl<'a> TargetRef<'a> {
+    pub fn try_parse(st: &'a str) -> Result<Self, UnknownError> {
+        let canon = CanonicalTarget::from_str(st)?;
+
+        Ok(TargetRef { exact: st, canon })
+    }
+
+    pub fn parse(st: &'a str) -> Self {
+        match Self::try_parse(st) {
+            Ok(targ) => targ,
+            Err(_) => panic!("Unknown target: {}", st),
+        }
+    }
+
+    pub fn exact(&self) -> &'a str {
+        self.exact
+    }
+
+    pub fn canonical(&self) -> CanonicalTarget {
+        self.canon
+    }
+}
+
+#[cfg(feature = "alloc")]
+mod feature_alloc {
+    use core::{ops::Deref, str::FromStr};
+
+    use crate::{pieces::UnknownError, CanonicalTarget, TargetRef};
+    use alloc::string::{String, ToString};
+
+    #[derive(Clone, Debug, Hash, PartialEq, Eq)]
+    pub struct OwnedTarget {
+        exact: String,
+        canon: CanonicalTarget,
+    }
+
+    impl<'a> Deref for OwnedTarget {
+        type Target = CanonicalTarget;
+
+        fn deref(&self) -> &CanonicalTarget {
+            &self.canon
+        }
+    }
+
+    impl OwnedTarget {
+        pub fn from_canonical(canon: CanonicalTarget) -> Self {
+            let exact = canon.to_string();
+
+            Self { exact, canon }
+        }
+        pub fn from_owned(st: String) -> Result<Self, UnknownError> {
+            let canon = CanonicalTarget::from_str(&st)?;
+
+            Ok(OwnedTarget { exact: st, canon })
+        }
+
+        pub fn into_exact(self) -> String {
+            self.exact
+        }
+
+        pub fn borrow<'a>(&'a self) -> TargetRef<'a> {
+            TargetRef {
+                exact: &self.exact,
+                canon: self.canon,
+            }
+        }
+    }
+
+    impl FromStr for OwnedTarget {
+        type Err = UnknownError;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            Self::from_owned(s.to_string())
+        }
+    }
+}
+
+#[cfg(feature = "alloc")]
+pub use feature_alloc::*;
+
+#[doc(hidden)]
+pub use core as __core;
+
+#[doc(hidden)]
+pub use target_tuples_macro::__match_targets;
+
 #[macro_export]
-macro_rules! match_targets{
+macro_rules! match_targets {
     {
-        match ($targ:expr) {
-            $($($comp:tt)-* => $exp:expr),* $(,)?
+        $expr:tt {
+            $($inner:tt)*
         }
     } => {
-        {
-            let __val: &$crate::Target = &$targ;
-            #[allow(unreachable_code)]
-            loop {
-                $(if ($crate::__match_target_pattern!($($comp)-*))(&__val){
-                    break $exp
-                })*
-
-                unreachable!("Incomplete Exhaustive Target Pattern (add a wildcard match as * => )")
-            }
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::Target;
-
-    #[test]
-    pub fn test_match_easy() {
-        let target = Target::parse("x86_64-pc-linux-gnu");
-        match_targets! {
-            match (target) {
-                x86_64-pc-linux-gnu => {},
-                * => panic!("Invalid Target")
-            }
-        }
-    }
-
-    #[test]
-    pub fn test_match_ref() {
-        let target = Target::parse("x86_64-pc-linux-gnu");
-        match_targets! {
-            match (&target) {
-                x86_64-pc-linux-gnu => {},
-                * => panic!("Invalid Target")
-            }
-        }
-    }
-
-    #[test]
-    pub fn target_match_arch_wildcard() {
-        let target = Target::parse("x86_64-pc-linux-gnu");
-        match_targets! {
-            match (target) {
-                *-pc-linux-gnu => {},
-                * => panic!("Invalid Target")
-            }
-        }
-    }
-
-    #[test]
-    pub fn target_match_vendor_wildcard() {
-        let target = Target::parse("x86_64-pc-linux-gnu");
-        match_targets! {
-            match (target) {
-                x86_64-*-linux-gnu => {},
-                * => panic!("Invalid Target")
-            }
-        }
-    }
-
-    #[test]
-    pub fn target_match_os_wildcard() {
-        let target = Target::parse("x86_64-pc-linux-gnu");
-        match_targets! {
-            match (target) {
-                x86_64-pc-*-gnu => {},
-                * => panic!("Invalid Target")
-            }
-        }
-    }
-
-    #[test]
-    pub fn target_match_env_wildcard() {
-        let target = Target::parse("x86_64-pc-linux-gnu");
-        match_targets! {
-            match (target) {
-                x86_64-pc-linux-* => {},
-                * => panic!("Invalid Target")
-            }
-        }
-    }
-
-    #[test]
-    pub fn target_match_sys_wildcard() {
-        let target = Target::parse("x86_64-pc-linux-gnu");
-        match_targets! {
-            match (target) {
-                x86_64-pc-* => {},
-                * => panic!("Invalid Target")
-            }
-        }
-    }
-
-    #[test]
-    pub fn target_match_first() {
-        let target = Target::parse("x86_64-pc-linux-gnu");
-        match_targets! {
-            match (target) {
-                x86_64-pc-linux-gnu => {},
-                x86_64-*-linux-* => panic!("Incorrect Match"),
-                * => panic!("Incorrect Match"),
-            }
-        }
-    }
-
-    #[test]
-    pub fn target_match_ignore_wrong_matches() {
-        let target = Target::parse("x86_64-pc-linux-gnu");
-        match_targets! {
-            match (target){
-                i686-*-linux-gnu => panic!("Incorrect Match"),
-                x86_64-*-linux-gnu => {},
-                * => panic!("Incorrect Match")
-            }
-        }
-    }
+        $crate::__match_targets!([$crate] $expr {
+            $($inner)*
+        })
+    };
 }

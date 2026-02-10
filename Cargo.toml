@@ -1,19 +1,24 @@
 [package]
 name = "target-tuples"
-version = "0.5.14"
+version = "0.16.0"
 authors = ["Connor Horman <chorman64@gmail.com>"]
-edition = "2018"
+edition = "2021"
 license = "Apache-2.0 AND MIT"
 repository = "https://github.com/chorman0773/rust-target-tuples"
 readme = "README.md"
 description = """
     A library to parse target tuples of the form `<arch>-<vendor>-<system>`, similar to those used by autoconf.
 """
+rust-version = "1.66"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+target-tuple-pieces = { path = "target-tuple-pieces", version = "0.16.0" }
+target-tuples-macro = { path = "target-tuples-macro", version = "0.1.0" }
 
+[features]
+alloc = []
 
 [[bin]]
 name = "config-sub"

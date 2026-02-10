@@ -2,7 +2,7 @@ use std::fs::File;
 
 use std::io::{BufRead, BufReader};
 
-use target_tuples::Target;
+use target_tuples::TargetRef;
 
 #[test]
 fn test_many_config_subs() -> std::io::Result<()> {
@@ -17,7 +17,7 @@ fn test_many_config_subs() -> std::io::Result<()> {
         }
         let mut s = s.split('|');
         let (k, v) = (s.next().unwrap(), s.next().unwrap());
-        let targ = Target::parse(k);
+        let targ = TargetRef::parse(k);
         assert_eq!(targ.to_string(), v);
     }
 
@@ -36,7 +36,7 @@ fn test_rustc_names() -> std::io::Result<()> {
         if s.trim().is_empty() {
             continue;
         }
-        Target::parse(&s);
+        TargetRef::parse(&s);
     }
     Ok(())
 }
@@ -55,7 +55,7 @@ fn test_idempotency() -> std::io::Result<()> {
         }
         let mut s = s.split('|');
         let (_, v) = (s.next().unwrap(), s.next().unwrap());
-        let targ = Target::parse(v);
+        let targ = TargetRef::parse(v);
         assert_eq!(targ.to_string(), v);
     }
 

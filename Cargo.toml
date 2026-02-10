@@ -19,6 +19,7 @@ target-tuples-macro = { path = "target-tuples-macro", version = "0.1.0" }
 
 [features]
 alloc = []
+nightly-docs = []
 
 [[bin]]
 name = "config-sub"
@@ -43,3 +44,6 @@ readme = "README.md"
 license = "Apache-2.0 OR MIT"
 edition = "2021"
 repository = "https://github.com/chorman0773/rust-target-tuples"
+
+[package.metadata.docs.rs]
+all-features = true

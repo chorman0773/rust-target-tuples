@@ -21,7 +21,7 @@ Additionally, it can be configured and built by running the configure script pre
 
 ## Semver Policy
 
-The MSRV for rust-target-tuples is rust 1.66. Increases to this value represents a semver major change. It is likely that, barring any major design changes, this will remain to the 1.0 release.
+The MSRV for rust-target-tuples is rust 1.66. Increases to this value represents a semver major change. It is likely that, barring any major design changes, this will remain to the 1.0 release. Features with names starting with `nightly` are exempt from semver and require an up-to-date nightly compiler. They may be removed at any time by a patch release
 
 This library does not guarantee the output of any of it's string parsing methods, or the canonical name of any component. Changes to both parsing and canonicalization may happen in a minor release. Additional component values may also be added in a minor release. 
 

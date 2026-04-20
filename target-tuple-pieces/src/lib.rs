@@ -54,6 +54,7 @@ pub enum Architecture {
     SPC700,
     Clever,
     HoleyBytes,
+    Skyarch,
 }
 
 impl FromStr for Architecture {
@@ -103,6 +104,7 @@ impl FromStr for Architecture {
 
             "spc700" | "spc" => Self::SPC700,
             "holeybytes" | "hbvm" | "hb" => Self::HoleyBytes,
+            "skyarch" => Self::Skyarch,
 
             _ => return Err(UnknownError),
         })
@@ -170,6 +172,7 @@ impl Architecture {
             Architecture::SPC700 => "spc700",
             Architecture::Clever => "clever",
             Architecture::HoleyBytes => "holeybytes",
+            Architecture::Skyarch => "skyarch",
         }
     }
 }
